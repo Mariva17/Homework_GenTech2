@@ -1,0 +1,79 @@
+// 1. Вывести одного юзера с самым большим балансом (проекция: имя)
+db.users.aggregate([
+    {
+        $sort: {balance: -1}
+    },
+    { $limit: 1},
+    { $project: {fullname: 1, _id: 0}}
+]);
+
+// 2. Указать юзерам 1 и 2 страну USA
+db.users.aggregate([
+    {
+        $match: {user_id: {$in: [1, 2]}}
+    },
+    {
+        $set: { country: 'USA'}
+    }
+]);
+
+// 3. Вывести все транзакции, где получателем являются юзеры из USA
+db.users.aggregate([
+    {
+        $match: {country: 'USA'}
+    },
+    {
+        $lookup: {
+            from: 'transactions',
+            localField: 'user_id',
+            foreignField: 'recipient_id',
+            as: 'recipient'
+        }   
+    }
+    
+]);
+
+// 4. Вывести все USD-транзакции незаблокированных юзеров не из USA
+
+db.users.aggregate([
+    { $match: {is_blocked: {$ne: true}, 
+        country: {$ne: 'USA'}}
+     },
+    {
+        $lookup: {
+            from: 'transactions',
+            localField: 'user_id',
+            foreignField: 'recipient_id',
+            as: 'recipient'
+        }   
+    },
+    { $unwind: '$recipient'},
+    {
+        $lookup: {
+            from: 'transactions',
+            localField: 'user_id',
+            foreignField: 'sender_id',
+            as: 'sender'
+        }   
+    },
+    { $unwind: '$sender' }
+       
+]);
+
+// 5. Вывести все транзакции, где отправителем являются юзеры не из USA
+db.transactions.aggregate([
+    {
+        $lookup: {
+            from: 'users',
+            localField: 'sender_id',
+            foreignField: 'user_id',
+            as: 'sender'
+        }   
+    },
+    
+    { $unwind: '$sender' },
+    { $match: { 
+        'sender.country': {$ne: 'USA'}}
+     }   
+]);
+
