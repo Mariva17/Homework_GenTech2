@@ -1,0 +1,51 @@
+// 1. Создать несколько транзакций
+
+db.transactions.insertMany([
+    {created_at: new Date(), amount: 150, currency: 'usd', sender_id: 1, recipient_id: 2, comment: 'present'},
+    {created_at: new Date(), amount: 300, currency: 'eur', sender_id: 12, recipient_id: 11, comment: 'surprise'},
+    {created_at: new Date(), amount: 500, currency: 'usd', sender_id: 11, recipient_id: 42, comment: 'help'},
+    {created_at: new Date(), amount: 100, currency: 'eur', sender_id: 2, recipient_id: 3, comment: 'test'},
+    {created_at: new Date(), amount: 1000, currency: 'eur', sender_id: 42, recipient_id: 4, comment: 'present'},
+    {created_at: new Date(), amount: 280, currency: 'eur', sender_id: 18, recipient_id: 4, comment: 'present'},
+    {created_at: new Date(), amount: 850, currency: 'usd', sender_id: 5, recipient_id: 2, comment: 'present'}
+    
+]);
+
+
+// 2. Вывести только завершенные транзакции от 100 EUR
+db.transactions.aggregate([
+    {
+        $match: {
+            amount: {$gte: 100},
+            currency: 'eur'
+        }
+    }
+]);
+
+// 3. Вывести незаблокированных пользователей из Germany и China с балансом до 10000
+db.users.aggregate([
+    {
+        $match: { is_blocked: {$ne: true},  country: {$in: ['Germany', 'China']}, balance: {$lte: 10000}}
+    }
+]);
+
+// 4. У звонков с продолжительностью до 1 часа удалить темы money и important
+db.calls.updateMany(
+    {duration_secs: {$lte: 60*60}}, 
+    { 
+        $pullAll: {
+            topics: ['money', 'important']
+        }
+    }
+);
+
+// 5. Ко всем звонкам добавить темы checked и new
+db.calls.updateMany(
+    {}, 
+    { 
+        $addToSet: {
+            topics: {$each: ['checked', 'new']}
+        }
+    }
+);
+
