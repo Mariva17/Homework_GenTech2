@@ -1,0 +1,68 @@
+// 1. Вывести юзеров, у которых нет сообщений
+
+db.users.aggregate([
+    { 
+        $lookup: {
+            from: 'messages',
+            localField: 'user_id',
+            foreignField: 'author_id',
+            as: 'author_mess'
+        }
+    },
+    
+    { 
+        $match: {
+            author_mess: []
+            
+        }
+    },
+    { 
+        $project: {
+            author_mess: 0
+            
+        }
+    }
+]);
+
+// 2. Вывести юзеров, у которых нет ни сообщений не ТХ
+
+db.users.aggregate([
+    { 
+        $lookup: {
+            from: 'messages',
+            localField: 'user_id',
+            foreignField: 'author_id',
+            as: 'author_mess'
+        }
+    },
+    { 
+        $lookup: {
+            from: 'transactions',
+            localField: 'user_id',
+            foreignField: 'sender_id',
+            as: 'sender_txs'
+        }
+    },
+    { 
+        $lookup: {
+            from: 'transactions',
+            localField: 'user_id',
+            foreignField: 'recipient_id',
+            as: 'recipient_txs'
+        }
+    },
+    { 
+        $match: {
+            author_mess: [],
+            sender_txs: [],
+            recipient_txs: []           
+        }
+    },
+    { 
+        $project: {
+            author_mess: 0,
+            sender_txs: 0,
+            recipient_txs: 0
+        }
+    }
+]);
